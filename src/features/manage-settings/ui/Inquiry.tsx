@@ -28,10 +28,6 @@ export const Inquiry = () => {
     }
   };
 
-  const handleCancel = () => {
-    reset();
-  };
-
   return (
     <section className="flex h-full w-full flex-col">
       <div className="flex h-16 items-center justify-between p-4">

@@ -1,4 +1,4 @@
-import { cn } from "@/shared/lib";
+import { cn, devLogger } from "@/shared/lib";
 import { Plus, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -99,9 +99,10 @@ export const CreateCalendar = () => {
       if (emailInputRef.current) {
         emailInputRef.current.value = "";
       }
+      devLogger.log("캘린더 생성:", data);
       setIsOpen(false);
     } catch (error) {
-      console.error("캘린더 생성 실패:", error);
+      devLogger.error("캘린더 생성 실패:", error);
     } finally {
       setIsSubmitting(false);
     }

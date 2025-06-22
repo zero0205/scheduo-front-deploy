@@ -3,6 +3,7 @@ import { ROLE_OPTIONS } from "@/shared/const";
 import { cn } from "@/shared/lib";
 import {
   Button,
+  ConfirmDialog,
   Dialog,
   DialogContent,
   DialogFooter,
@@ -21,9 +22,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  TextConfirmDialog,
 } from "@/shared/ui";
-import { TextConfirmDialog } from "@/shared/ui/TextConfirmDialog";
-import { ConfirmDialog } from "@/shared/ui/confirmDialog";
 import { PenSquare, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";

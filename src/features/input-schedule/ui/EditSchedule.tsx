@@ -1,4 +1,5 @@
 import type { InputScheduleRequest } from "@/entities/schedule";
+import { devLogger } from "@/shared/lib";
 import { useEffect, useState } from "react";
 import { ScheduleForm } from "./ScheduleForm";
 
@@ -46,8 +47,23 @@ export const EditSchedule = ({ onCancel }: EditScheduleProps) => {
   }, []);
 
   const handleSubmit = async (data: InputScheduleRequest) => {
-    console.log(data, "수정 제출");
+    try {
+      setIsSubmitting(true);
+      devLogger.log("일정 수정:", data);
+    } catch (error) {
+      devLogger.error("일정 수정 실패:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="text-grayscale-400 text-medium-m">로딩 중...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col">

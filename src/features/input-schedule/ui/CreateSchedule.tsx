@@ -1,4 +1,5 @@
 import type { InputScheduleRequest } from "@/entities/schedule";
+import { devLogger } from "@/shared/lib";
 import { useState } from "react";
 import { ScheduleForm } from "./ScheduleForm";
 
@@ -13,7 +14,14 @@ export const CreateSchedule = ({ onCancel }: CreateScheduleProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (data: InputScheduleRequest) => {
-    console.log(data, "제출");
+    try {
+      setIsSubmitting(true);
+      devLogger.log("일정 생성:", data);
+    } catch (error) {
+      devLogger.error("일정 생성 실패:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

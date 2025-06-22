@@ -4,7 +4,7 @@ import type { RightSidebarViewType } from "@/shared/model";
 import { Button, ButtonGroup, Calendar, Popover, PopoverContent, PopoverTrigger, ScrollArea } from "@/shared/ui";
 import { format } from "date-fns";
 import { CalendarIcon, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ShareScheduleItemType } from "../lib";
 import { ShareScheduleItem } from "./ShareScheduleItem";
 import { ToggleCheckButton } from "./ToggleCheckButton";
@@ -29,16 +29,7 @@ export const ShareSchedule = ({ onSetView }: ShareScheduleProps) => {
   const [isStartCalendarOpen, setIsStartCalendarOpen] = useState(false);
   const [isEndCalendarOpen, setIsEndCalendarOpen] = useState(false);
   const [selectedSchedules, setSelectedSchedules] = useState<Set<string>>(new Set());
-  const [calendars, setCalendars] = useState<ScheduleCalendar[]>([
-    {
-      id: 1,
-      name: "개인 캘린더",
-    },
-    {
-      id: 2,
-      name: "Scheduo 캘린더",
-    },
-  ]);
+  const [calendars, setCalendars] = useState<ScheduleCalendar[]>([]);
   const [schedules] = useState<ShareScheduleItemType[]>([
     {
       id: 1,
@@ -83,6 +74,21 @@ export const ShareSchedule = ({ onSetView }: ShareScheduleProps) => {
       endTime: "23:59",
     },
   ]);
+
+  useEffect(() => {
+    setCalendars([
+      {
+        id: 1,
+        name: "개인 캘린더",
+        participants: [],
+      },
+      {
+        id: 2,
+        name: "Scheduo 캘린더",
+        participants: [],
+      },
+    ]);
+  }, []);
 
   const getScheduleKey = (scheduleId: number, date: string): string => {
     return `${scheduleId}|${date}`;
