@@ -1,9 +1,10 @@
 import { cn, devLogger } from "@/shared/lib";
 import { Plus, Trash2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import type { CalendarParticipant, CalendarRole, ScheduleCalendar } from "@/entities/calendar";
+import type { Member } from "@/entities/member/model";
 import { ROLE_OPTIONS } from "@/shared/const";
 import {
   Button,
@@ -19,6 +20,7 @@ import {
   FormItem,
   FormLabel,
   Input,
+  MemberSearchInput,
   ScrollArea,
   Select,
   SelectContent,
@@ -31,12 +33,11 @@ type CreateCalendarFormData = Omit<ScheduleCalendar, "id">;
 
 /**
  * 새로운 캘린더를 생성하는 다이얼로그 컴포넌트입니다.
- * 캘린더 이름을 설정하고, 참가자들을 추가하여 생성합니다.
+ * 캘린더 이름을 설정하고, 참가자들을 검색하여 추가한 후 생성합니다.
  */
 export const CreateCalendar = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const emailInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<CreateCalendarFormData>({
     defaultValues: {
@@ -50,35 +51,18 @@ export const CreateCalendar = () => {
     name: "participants",
   });
 
-  const handleInvite = () => {
-    const emailInput = emailInputRef.current?.value.trim();
-    if (!emailInput) return;
-
-    // TODO: 검색 결과 나온 유저만 추가하도록 변경
-    const emails = emailInput
-      .split(",")
-      .map((email) => email.trim())
-      .filter(Boolean);
-
+  const handleSelectMember = (member: Member) => {
     const existingEmails = fields.map((field) => field.email);
 
-    const newParticipants = emails
-      .filter((email) => email && !existingEmails.includes(email))
-      .map(
-        (email): CalendarParticipant => ({
-          id: Date.now() + Math.random(),
-          email,
-          nickname: email,
-          role: "VIEWER",
-        }),
-      );
+    if (!existingEmails.includes(member.email)) {
+      const newParticipant: CalendarParticipant = {
+        id: member.id,
+        email: member.email,
+        nickname: member.nickname,
+        role: "VIEWER",
+      };
 
-    for (const participant of newParticipants) {
-      append(participant);
-    }
-
-    if (emailInputRef.current) {
-      emailInputRef.current.value = "";
+      append(newParticipant);
     }
   };
 
@@ -94,11 +78,7 @@ export const CreateCalendar = () => {
   const handleSubmit = async (data: CreateCalendarFormData) => {
     setIsSubmitting(true);
     try {
-      // TODO: 캘린더 생성 API 호출
       form.reset();
-      if (emailInputRef.current) {
-        emailInputRef.current.value = "";
-      }
       devLogger.log("캘린더 생성:", data);
       setIsOpen(false);
     } catch (error) {
@@ -110,9 +90,6 @@ export const CreateCalendar = () => {
 
   const handleCancel = () => {
     form.reset();
-    if (emailInputRef.current) {
-      emailInputRef.current.value = "";
-    }
     setIsOpen(false);
   };
 
@@ -120,9 +97,6 @@ export const CreateCalendar = () => {
     setIsOpen(open);
     if (open) {
       form.reset();
-      if (emailInputRef.current) {
-        emailInputRef.current.value = "";
-      }
     }
   };
 
@@ -164,22 +138,10 @@ export const CreateCalendar = () => {
             <div className="flex min-h-0 flex-1 flex-col space-y-4">
               <FormLabel>멤버</FormLabel>
 
-              <div className="flex gap-2">
-                <Input
-                  ref={emailInputRef}
-                  placeholder="이메일을 입력하세요"
-                  className="flex-1"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleInvite();
-                    }
-                  }}
-                />
-                <Button type="button" onClick={handleInvite}>
-                  Invite
-                </Button>
-              </div>
+              <MemberSearchInput
+                excludeEmails={fields.map((field) => field.email)}
+                onSelectMember={handleSelectMember}
+              />
 
               {fields.length > 0 && (
                 <ScrollArea className="max-h-80 w-full rounded-lg border border-grayscale-400 p-3">

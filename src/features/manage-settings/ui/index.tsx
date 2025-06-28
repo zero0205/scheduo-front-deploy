@@ -23,7 +23,7 @@ export const ManageSettings = () => {
   const renderView = () => {
     switch (view) {
       case "EDIT_PROFILE":
-        return <EditProfile />;
+        return <EditProfile onCancel={() => setIsOpen(false)} />;
       case "TERMS_OF_USE":
         return <TermsOfUse />;
       case "INQUIRY":

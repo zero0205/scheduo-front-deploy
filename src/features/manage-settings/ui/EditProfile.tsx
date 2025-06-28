@@ -1,13 +1,24 @@
+import { memberApi } from "@/entities/member/api";
+import { devLogger } from "@/shared/lib";
+import { useAuthStore } from "@/shared/stores";
 import { Button, Input } from "@/shared/ui";
 import { Label } from "@/shared/ui/label";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { useShallow } from "zustand/shallow";
+
+interface EditProfileProps {
+  onCancel: () => void;
+}
 
 interface ProfileFormData {
   nickname: string;
 }
 
-export const EditProfile = () => {
+export const EditProfile = ({ onCancel }: EditProfileProps) => {
+  const [user, updateUser] = useAuthStore(useShallow((state) => [state.user, state.updateUser]));
+
   const {
     register,
     handleSubmit,
@@ -16,21 +27,21 @@ export const EditProfile = () => {
   } = useForm<ProfileFormData>();
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      // TODO: 프로필 조회 API 호출
-      // const profile = await getUserProfile();
-      // setValue("nickname", profile.nickname);
-
-      // 임시 데이터
-      setValue("nickname", "홍길동");
-    };
-
-    fetchProfile();
-  }, [setValue]);
+    if (user?.nickname) {
+      setValue("nickname", user.nickname);
+    }
+  }, [user?.nickname, setValue]);
 
   const onSubmit = async (data: ProfileFormData) => {
-    // TODO: 프로필 업데이트 API 호출
-    console.log(`${data.nickname} 변경 완료!`);
+    try {
+      const result = await memberApi.editMyProfile(data);
+      updateUser({ nickname: result.nickname });
+      onCancel();
+      toast.success("프로필이 성공적으로 수정되었습니다.");
+    } catch (error) {
+      devLogger.error("프로필 수정 실패:", error);
+      toast.error("프로필 수정에 실패했습니다. 다시 시도해주세요.");
+    }
   };
 
   return (
@@ -65,7 +76,7 @@ export const EditProfile = () => {
           <Button type="submit" disabled={isSubmitting} className="w-20">
             {isSubmitting ? "저장 중..." : "저장"}
           </Button>
-          <Button type="button" variant="outline" className="w-20">
+          <Button type="button" variant="outline" className="w-20" onClick={onCancel}>
             취소
           </Button>
         </div>
