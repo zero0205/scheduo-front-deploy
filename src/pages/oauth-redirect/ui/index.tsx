@@ -4,6 +4,7 @@ import { useAuthStore } from "@/shared/stores";
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
+import { useShallow } from "zustand/shallow";
 
 /**
  * 소셜 로그인 리다이렉션을 처리하는 페이지입니다.
@@ -13,10 +14,12 @@ import { toast } from "sonner";
 export const OAuthRedirectPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { setAuth, setUser } = useAuthStore((state) => ({
-    setAuth: state.setAuth,
-    setUser: state.setUser,
-  }));
+  const { setAuth, setUser } = useAuthStore(
+    useShallow((state) => ({
+      setAuth: state.setAuth,
+      setUser: state.setUser,
+    })),
+  );
 
   useEffect(() => {
     const processOAuthCallback = async () => {
