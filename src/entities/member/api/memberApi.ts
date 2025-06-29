@@ -12,7 +12,7 @@ export const memberApi = {
   },
   withdrawMyAccount: async () => {},
 
-  searchMember: async (email: string): Promise<Member[]> => {
+  searchMember: async (email: string): Promise<{ users: Member[] }> => {
     const result = await axiosInstance.get("/members/search", { params: { email } });
     return result.data.data;
   },
