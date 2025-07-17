@@ -5,7 +5,7 @@ export const UserInfo = () => {
   const user = useAuthStore((state) => state.user);
 
   if (!user) {
-    return <div>사용자 정보를 불러올 수 없습니다.</div>;
+    return <div className="flex items-center justify-between p-4">사용자 정보를 불러올 수 없습니다.</div>;
   }
 
   return (

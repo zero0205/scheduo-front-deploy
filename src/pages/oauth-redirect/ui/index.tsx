@@ -1,4 +1,5 @@
 import { memberApi } from "@/entities/member/api";
+import { axiosInstance } from "@/shared/api";
 import { devLogger } from "@/shared/lib";
 import { useAuthStore } from "@/shared/stores";
 import { useEffect } from "react";
@@ -35,6 +36,7 @@ export const OAuthRedirectPage = () => {
 
         setAuth(accessToken, refreshToken);
 
+        axiosInstance.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
         const user = await memberApi.getMyProfile();
         setUser(user);
 
