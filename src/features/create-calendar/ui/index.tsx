@@ -3,7 +3,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
-import type { CalendarParticipant, CalendarRole, ScheduleCalendar } from "@/entities/calendar";
+import { type CalendarParticipant, type CalendarRole, calendarApi, useCalendarStore } from "@/entities/calendar";
 import type { Member } from "@/entities/member/model";
 import { ROLE_OPTIONS } from "@/shared/const";
 import {
@@ -29,7 +29,10 @@ import {
   SelectValue,
 } from "@/shared/ui";
 
-type CreateCalendarFormData = Omit<ScheduleCalendar, "id">;
+interface CreateCalendarFormData {
+  title: string;
+  participants: (CalendarParticipant & { nickname: string; email: string })[];
+}
 
 /**
  * 새로운 캘린더를 생성하는 다이얼로그 컴포넌트입니다.
@@ -39,9 +42,11 @@ export const CreateCalendar = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
+  const { addCalendar } = useCalendarStore();
+
   const form = useForm<CreateCalendarFormData>({
     defaultValues: {
-      name: "",
+      title: "",
       participants: [],
     },
   });
@@ -52,17 +57,16 @@ export const CreateCalendar = () => {
   });
 
   const handleSelectMember = (member: Member) => {
-    const existingEmails = fields.map((field) => field.email);
+    const existingMembers = fields.map((field) => field.participantId);
 
-    if (!existingEmails.includes(member.email)) {
-      const newParticipant: CalendarParticipant = {
-        id: member.id,
-        email: member.email,
+    if (!existingMembers.includes(member.id)) {
+      append({
+        participantId: member.id,
+        role: "VIEW",
         nickname: member.nickname,
-        role: "VIEWER",
-      };
-
-      append(newParticipant);
+        email: member.email,
+        me: false,
+      });
     }
   };
 
@@ -78,8 +82,17 @@ export const CreateCalendar = () => {
   const handleSubmit = async (data: CreateCalendarFormData) => {
     setIsSubmitting(true);
     try {
+      const submissionData = {
+        title: data.title,
+        participants: data.participants.map(({ participantId, role }) => ({
+          participantId,
+          role,
+        })),
+      };
+      const response = await calendarApi.createCalendar(submissionData);
+      devLogger.log("캘린더 생성:", submissionData);
+      addCalendar({ calendarId: response.calendarId, title: response.title });
       form.reset();
-      devLogger.log("캘린더 생성:", data);
       setIsOpen(false);
     } catch (error) {
       devLogger.error("캘린더 생성 실패:", error);
@@ -116,7 +129,7 @@ export const CreateCalendar = () => {
           <form onSubmit={form.handleSubmit(handleSubmit)} className="flex min-w-0 flex-1 flex-col space-y-6">
             <FormField
               control={form.control}
-              name="name"
+              name="title"
               rules={{ required: "캘린더 이름을 입력해주세요" }}
               render={({ field }) => (
                 <FormItem>
@@ -126,7 +139,7 @@ export const CreateCalendar = () => {
                       placeholder="캘린더 이름을 입력하세요"
                       {...field}
                       className={cn(
-                        form.formState.errors.name &&
+                        form.formState.errors.title &&
                           "border-[2px] border-notification-strong focus:border-notification-strong focus:ring-notification-strong",
                       )}
                     />

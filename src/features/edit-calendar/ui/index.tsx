@@ -1,7 +1,13 @@
-import type { CalendarParticipant, CalendarRole, ScheduleCalendar } from "@/entities/calendar";
+import {
+  type CalendarParticipant,
+  type CalendarRole,
+  calendarApi,
+  participantApi,
+  useCalendarStore,
+} from "@/entities/calendar";
 import type { Member } from "@/entities/member/model";
 import { ROLE_OPTIONS } from "@/shared/const";
-import { cn } from "@/shared/lib";
+import { cn, devLogger } from "@/shared/lib";
 import {
   Button,
   ConfirmDialog,
@@ -29,13 +35,18 @@ import {
 import { PenSquare, Trash2, User, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
-interface EditableScheduleCalendar extends ScheduleCalendar {
-  nickname: string;
+interface EditableScheduleCalendar {
+  calendarId: number;
+  title: string;
+  memberRole: CalendarRole;
+  memberNickname: string;
+  participants: CalendarParticipant[];
 }
 
 interface EditCalendarFormData {
-  name: string;
+  title: string;
   nickname: string;
 }
 
@@ -58,9 +69,11 @@ export const EditCalendar = ({ calendarId }: EditCalendarProps) => {
   const [showDeleteMember, setShowDeleteMember] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState<Member[]>([]);
 
+  const { updateCalendar, deleteCalendar } = useCalendarStore();
+
   const form = useForm<EditCalendarFormData>({
     defaultValues: {
-      name: "",
+      title: "",
       nickname: "",
     },
   });
@@ -73,35 +86,16 @@ export const EditCalendar = ({ calendarId }: EditCalendarProps) => {
 
   const fetchCalendarData = useCallback(async (id: number): Promise<EditableScheduleCalendar> => {
     try {
-      // TODO: 실제 캘린더 조회 API 호출로 교체
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      return {
-        id,
-        name: "기존 캘린더 이름",
-        nickname: "내 이름",
-        participants: [
-          {
-            id: 1,
-            email: "owner@example.com",
-            nickname: "소유자",
-            role: "OWNER",
-          },
-          {
-            id: 2,
-            email: "editor@example.com",
-            nickname: "편집자",
-            role: "EDITOR",
-          },
-        ],
-      };
+      return await calendarApi.getCalendarById(id);
     } catch (err) {
       throw new Error("캘린더 정보를 불러오는데 실패했습니다.");
     }
   }, []);
 
   useEffect(() => {
-    if (!isOpen || !calendarId) return;
+    if (!isOpen || !calendarId) {
+      return;
+    }
 
     const loadCalendarData = async () => {
       setIsLoading(true);
@@ -110,8 +104,8 @@ export const EditCalendar = ({ calendarId }: EditCalendarProps) => {
       try {
         const data = await fetchCalendarData(calendarId);
         form.reset({
-          name: data.name || "",
-          nickname: data.nickname || "",
+          title: data.title || "",
+          nickname: data.memberNickname || "",
         });
         setParticipants(data.participants || []);
       } catch (err) {
@@ -137,24 +131,25 @@ export const EditCalendar = ({ calendarId }: EditCalendarProps) => {
 
     setIsInviting(true);
     try {
-      // TODO: 여러 멤버 초대 API 호출
+      const invitePromises = selectedMembers.map((member) =>
+        calendarApi.inviteToCalendar(calendarId, { memberId: member.id }),
+      );
+      await Promise.all(invitePromises);
 
-      // API 성공 후에만 UI 업데이트
       const newParticipants: CalendarParticipant[] = selectedMembers.map((member) => ({
-        id: member.id,
-        email: member.email,
+        participantId: member.id,
         nickname: member.nickname,
-        role: "VIEWER",
+        role: "VIEW" as CalendarRole,
+        email: member.email,
+        me: false,
       }));
 
       setParticipants((prev) => [...prev, ...newParticipants]);
       setSelectedMembers([]);
-
-      // TODO: 성공 토스트 표시
+      toast("멤버 초대가 완료되었습니다.");
     } catch (error) {
-      console.error("참가자 초대 실패:", error);
-      // TODO: 에러 토스트 표시
-      // UI 상태는 자동으로 원래대로 유지됨 (API 실패 시 아무것도 변경하지 않음)
+      devLogger.error("참가자 초대 실패:", error);
+      toast("멤버 초대 실패.");
     } finally {
       setIsInviting(false);
     }
@@ -162,44 +157,47 @@ export const EditCalendar = ({ calendarId }: EditCalendarProps) => {
 
   const handleRoleChange = async (participantId: number, role: CalendarRole) => {
     try {
-      // TODO: 역할 변경 API 호출
-
+      await participantApi.modifyRole(calendarId, participantId, role);
       setParticipants((prev) =>
-        prev.map((participant) => (participant.id === participantId ? { ...participant, role } : participant)),
+        prev.map((participant) =>
+          participant.participantId === participantId ? { ...participant, role } : participant,
+        ),
       );
+      toast("멤버 역할이 변경되었습니다.");
     } catch (error) {
-      console.error("역할 변경 실패:", error);
-      // TODO: 에러 토스트 표시
+      devLogger.error("역할 변경 실패:", error);
+      toast("멤버 역할 변경에 실패했습니다.");
     }
   };
 
   const handleRemoveParticipant = async (participantId: number) => {
     try {
-      // TODO: 삭제 API 호출
-
-      setParticipants((prev) => prev.filter((participant) => participant.id !== participantId));
+      await participantApi.deleteParticipant(calendarId, participantId);
+      setParticipants((prev) => prev.filter((participant) => participant.participantId !== participantId));
+      toast("멤버가 삭제되었습니다.");
     } catch (error) {
-      console.error("참가자 삭제 실패:", error);
-      // TODO: 에러 토스트 표시
+      devLogger.error("참가자 삭제 실패:", error);
+      toast("멤버 삭제에 실패했습니다.");
     }
   };
 
   const handleSubmit = async (data: EditCalendarFormData) => {
     setIsSubmitting(true);
     try {
+      if (!calendarId) return;
+
       const updateData = {
-        name: data.name,
+        title: data.title,
         nickname: data.nickname,
       };
 
-      console.log(updateData);
-      // TODO: 캘린더 수정 API 호출(닉네임은 수정하지 않는다면 null을 넣거나 아예 nickname 필드 빼기)
+      await calendarApi.updateCalendar(calendarId, updateData);
+      updateCalendar({ calendarId, title: data.title });
 
       setIsOpen(false);
-      // TODO: 성공 토스트 표시
+      toast("캘린더가 성공적으로 수정되었습니다.");
     } catch (error) {
-      console.error("캘린더 수정 실패:", error);
-      // TODO: 에러 토스트 표시
+      devLogger.error("캘린더 수정 실패:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -212,19 +210,21 @@ export const EditCalendar = ({ calendarId }: EditCalendarProps) => {
 
   const handleDelete = async () => {
     try {
-      // TODO: 캘린더 삭제 요청 API 호출
+      if (!calendarId) return;
+
+      await calendarApi.deleteCalendar(calendarId);
+      deleteCalendar(calendarId);
 
       setIsOpen(false);
-      // TODO: 성공 토스트 표시
+      toast("캘린더가 성공적으로 삭제되었습니다.");
     } catch (error) {
-      console.error("캘린더 삭제 실패:", error);
-      // TODO: 에러 토스트 표시
+      devLogger.error("캘린더 삭제 실패:", error);
     }
   };
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
-    if (open) {
+    if (!open) {
       form.reset();
     }
   };
@@ -257,7 +257,7 @@ export const EditCalendar = ({ calendarId }: EditCalendarProps) => {
             <form onSubmit={form.handleSubmit(handleSubmit)} className="flex min-w-0 flex-col space-y-6">
               <FormField
                 control={form.control}
-                name="name"
+                name="title"
                 rules={{ required: "캘린더 이름을 입력해주세요" }}
                 render={({ field }) => (
                   <FormItem>
@@ -267,7 +267,7 @@ export const EditCalendar = ({ calendarId }: EditCalendarProps) => {
                         placeholder="캘린더 이름을 입력하세요"
                         {...field}
                         className={cn(
-                          form.formState.errors.name &&
+                          form.formState.errors.title &&
                             "border-[2px] border-notification-strong focus:border-notification-strong focus:ring-notification-strong",
                         )}
                       />
@@ -322,7 +322,7 @@ export const EditCalendar = ({ calendarId }: EditCalendarProps) => {
                           className="flex items-center gap-2 rounded-lg border border-primary-main/20 bg-primary-main/5 p-3"
                         >
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-grayscale-100">
-                            <User className="h-4 w-4 text-grayscale-600" />
+                            <User className="h-4 w-4" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="truncate text-grayscale-700 text-medium-r">{member.nickname}</div>
@@ -347,7 +347,7 @@ export const EditCalendar = ({ calendarId }: EditCalendarProps) => {
                   <ScrollArea className="max-h-80 rounded-lg border border-grayscale-400 p-3">
                     <div className="space-y-1 pr-1">
                       {participants.map((participant) => (
-                        <div key={participant.id} className="flex items-center gap-2 py-1">
+                        <div key={participant.participantId} className="flex items-center gap-2 py-1">
                           <div className="flex w-0 flex-1 flex-col">
                             <div
                               className="truncate text-grayscale-700 text-medium-r leading-7"
@@ -362,7 +362,9 @@ export const EditCalendar = ({ calendarId }: EditCalendarProps) => {
 
                           <Select
                             value={participant.role}
-                            onValueChange={(value) => handleRoleChange(participant.id, value as CalendarRole)}
+                            onValueChange={(value) =>
+                              handleRoleChange(participant.participantId, value as CalendarRole)
+                            }
                             disabled={participant.role === "OWNER"}
                           >
                             <SelectTrigger className="h-8 w-28">
@@ -382,7 +384,7 @@ export const EditCalendar = ({ calendarId }: EditCalendarProps) => {
                             onOpenChange={setShowDeleteMember}
                             title="멤버 삭제"
                             description="멤버를 삭제하시겠습니까?"
-                            onConfirm={() => handleRemoveParticipant(participant.id)}
+                            onConfirm={() => handleRemoveParticipant(participant.participantId)}
                             variant="destructive"
                           >
                             <Button
@@ -409,7 +411,7 @@ export const EditCalendar = ({ calendarId }: EditCalendarProps) => {
                   onOpenChange={setShowDeleteCalendar}
                   title="캘린더 삭제"
                   description="캘린더를 삭제하면 모든 일정이 영구적으로 삭제됩니다. 캘린더를 삭제하려면 아래에 캘린더 이름을 똑같이 입력하세요."
-                  expectedText={form.watch("name") || ""}
+                  expectedText={form.watch("title") || ""}
                   onConfirm={handleDelete}
                 >
                   <Button
