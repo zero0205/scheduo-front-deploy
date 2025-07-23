@@ -1,8 +1,13 @@
 import type { CalendarInfo, CalendarParticipant, CalendarRole } from "../model";
 
+interface CreateCalendarParticipant {
+  memberId: number;
+  role: CalendarRole;
+}
+
 export interface CreateCalendarRequest {
   title: string;
-  participants: Pick<CalendarParticipant, "participantId" | "role">[];
+  participants: CreateCalendarParticipant[];
 }
 
 export interface CreateCalendarResponse {

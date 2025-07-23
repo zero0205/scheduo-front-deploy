@@ -85,7 +85,7 @@ export const CreateCalendar = () => {
       const submissionData = {
         title: data.title,
         participants: data.participants.map(({ participantId, role }) => ({
-          participantId,
+          memberId: participantId,
           role,
         })),
       };
