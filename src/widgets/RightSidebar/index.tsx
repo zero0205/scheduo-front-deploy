@@ -1,8 +1,8 @@
 import { CreateSchedule, EditSchedule } from "@/features/input-schedule";
-import { NotificationList } from "@/features/notification";
 import { SearchSchedule } from "@/features/search-schedule";
 import { ShareSchedule } from "@/features/share-schedule";
 import { DailySchedule } from "@/features/view-daily-schedule";
+import { NotificationList } from "@/features/view-notification";
 import type { RightSidebarViewType } from "@/shared/model";
 import { Button } from "@/shared/ui";
 import { Bell, Search } from "lucide-react";
