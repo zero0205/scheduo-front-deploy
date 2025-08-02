@@ -21,7 +21,7 @@ export interface UpdateCalendarRequest {
 }
 
 export interface InviteToCalendarRequest {
-  memberId: number;
+  memberIds: number[];
 }
 
 export interface GetCalendarListResponse {
