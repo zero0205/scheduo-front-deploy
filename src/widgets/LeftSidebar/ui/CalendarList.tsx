@@ -1,6 +1,6 @@
+import { useEffect, useState } from "react";
 import { calendarApi, useCalendarStore } from "@/entities/calendar";
 import { EditCalendar } from "@/features/edit-calendar";
-import { useEffect, useState } from "react";
 
 export const CalendarList = () => {
   const { calendars, setCalendars } = useCalendarStore();

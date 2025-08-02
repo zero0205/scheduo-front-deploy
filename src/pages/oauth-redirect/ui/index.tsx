@@ -1,11 +1,11 @@
-import { memberApi } from "@/entities/member/api";
-import { axiosInstance } from "@/shared/api";
-import { devLogger } from "@/shared/lib";
-import { useAuthStore } from "@/shared/stores";
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { useShallow } from "zustand/shallow";
+import { memberApi } from "@/entities/member/api";
+import { axiosInstance } from "@/shared/api";
+import { devLogger } from "@/shared/lib";
+import { useAuthStore } from "@/shared/stores";
 
 /**
  * 소셜 로그인 리다이렉션을 처리하는 페이지입니다.

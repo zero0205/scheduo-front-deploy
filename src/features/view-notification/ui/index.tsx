@@ -1,7 +1,7 @@
+import { useEffect, useState } from "react";
 import { type Notification, notificationApi } from "@/entities/notification";
 import { devLogger } from "@/shared/lib";
 import { Badge } from "@/shared/ui/badge";
-import { useEffect, useState } from "react";
 import { NotificationItem } from "./NotificationItem";
 
 /**

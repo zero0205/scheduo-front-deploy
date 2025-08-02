@@ -1,7 +1,7 @@
+import { Route, Routes } from "react-router";
 import { LogIn } from "@/pages/login";
 import { Main } from "@/pages/main";
 import { OAuthRedirectPage } from "@/pages/oauth-redirect";
-import { Route, Routes } from "react-router";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 export const Router = () => {

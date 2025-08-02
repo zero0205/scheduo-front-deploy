@@ -1,11 +1,10 @@
-import { cn, devLogger } from "@/shared/lib";
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
-
 import { type CalendarParticipant, type CalendarRole, calendarApi, useCalendarStore } from "@/entities/calendar";
 import type { Member } from "@/entities/member/model";
 import { ROLE_OPTIONS } from "@/shared/const";
+import { cn, devLogger } from "@/shared/lib";
 import {
   Button,
   Dialog,

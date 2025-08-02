@@ -1,6 +1,6 @@
+import { useState } from "react";
 import type { InputScheduleRequest } from "@/entities/schedule";
 import { devLogger } from "@/shared/lib";
-import { useState } from "react";
 import { ScheduleForm } from "./ScheduleForm";
 
 interface CreateScheduleProps {

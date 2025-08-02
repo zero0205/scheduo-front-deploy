@@ -1,3 +1,5 @@
+import { Bell, Search } from "lucide-react";
+import { useState } from "react";
 import { CreateSchedule, EditSchedule } from "@/features/input-schedule";
 import { SearchSchedule } from "@/features/search-schedule";
 import { ShareSchedule } from "@/features/share-schedule";
@@ -5,8 +7,6 @@ import { DailySchedule } from "@/features/view-daily-schedule";
 import { NotificationList } from "@/features/view-notification";
 import type { RightSidebarViewType } from "@/shared/model";
 import { Button } from "@/shared/ui";
-import { Bell, Search } from "lucide-react";
-import { useState } from "react";
 
 /**
  * 애플리케이션 우측에 위치하는 사이드바 컴포넌트입니다.

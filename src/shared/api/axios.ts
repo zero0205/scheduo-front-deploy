@@ -1,6 +1,6 @@
-import { useAuthStore } from "@/shared/stores";
 import axios, { type AxiosError, type AxiosResponse } from "axios";
 import { toast } from "sonner";
+import { useAuthStore } from "@/shared/stores";
 import { TOKEN_ERROR_STATUS } from "./consts";
 import type { ErrorResponse, SuccessResponse } from "./types";
 

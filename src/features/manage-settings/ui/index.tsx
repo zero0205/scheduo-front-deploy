@@ -1,8 +1,8 @@
-import { requestLogOut } from "@/entities/auth/api";
-import { Button, Dialog, DialogContent, DialogTrigger } from "@/shared/ui";
 import { ChevronRight, Settings } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import { requestLogOut } from "@/entities/auth/api";
+import { Button, Dialog, DialogContent, DialogTrigger } from "@/shared/ui";
 import { EditProfile } from "./EditProfile";
 import { Inquiry } from "./Inquiry";
 import { TermsOfUse } from "./TermsOfUse";

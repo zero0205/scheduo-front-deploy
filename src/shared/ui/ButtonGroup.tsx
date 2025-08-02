@@ -1,5 +1,5 @@
-import { Button } from "@/shared/ui";
 import type { LucideIcon } from "lucide-react";
+import { Button } from "@/shared/ui";
 
 interface ButtonGroupProps {
   leftText?: string;

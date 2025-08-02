@@ -1,9 +1,8 @@
-import { cn, devLogger } from "@/shared/lib";
 import { Loader2, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-
 import { memberApi } from "@/entities/member/api";
 import type { Member } from "@/entities/member/model";
+import { cn, devLogger } from "@/shared/lib";
 import { Input } from "@/shared/ui";
 
 interface MemberSearchInputProps {

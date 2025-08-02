@@ -1,6 +1,6 @@
-import { Button } from "@/shared/ui";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Button } from "@/shared/ui";
 import { DAY_NAMES } from "./consts";
 import { CurrentMonthEvents } from "./sampleData";
 
@@ -195,7 +195,7 @@ export const Calendar = () => {
                         key={key}
                         className={`h-5 text-medium-s ${event.color} flex items-center justify-center overflow-hidden ${
                           isStart ? "ml-1 rounded-l-sm" : ""
-                        } ${isEnd ? " mr-1 rounded-r-sm" : ""} ${
+                        } ${isEnd ? "mr-1 rounded-r-sm" : ""} ${
                           isMiddle ? "rounded-none" : ""
                         } z-10 text-grayscale-white`}
                         title={event.title}

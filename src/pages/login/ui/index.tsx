@@ -1,8 +1,8 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { requestLogIn } from "@/entities/auth/api";
 import { useAuthStore } from "@/shared/stores";
 import { Google, Kakao } from "@/shared/ui";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
 import { ANIMATION_SEQUENCE } from "../consts";
 
 /**

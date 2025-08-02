@@ -120,7 +120,9 @@ body {
 @utility login-logo-animate {
   transform: var(--logo-transform, translate3d(0, 20px, 0));
   opacity: var(--logo-opacity, 0);
-  transition: transform 800ms ease-out, opacity 800ms ease-out;
+  transition:
+    transform 800ms ease-out,
+    opacity 800ms ease-out;
   will-change: transform, opacity;
 }
 

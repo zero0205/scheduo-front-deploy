@@ -1,6 +1,6 @@
-import { Button, Input } from "@/shared/ui";
 import { Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Button, Input } from "@/shared/ui";
 import { RecentSearchKeyword } from "./RecentSearchKeyword";
 import { SearchResults } from "./SearchResults";
 import type { SearchResultItem, ViewType } from "./types";

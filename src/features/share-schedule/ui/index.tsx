@@ -1,10 +1,10 @@
+import { format } from "date-fns";
+import { CalendarIcon, ChevronDown } from "lucide-react";
+import { useState } from "react";
 import { useCalendarStore } from "@/entities/calendar";
 import { cn } from "@/shared/lib";
 import type { RightSidebarViewType } from "@/shared/model";
 import { Button, ButtonGroup, Calendar, Popover, PopoverContent, PopoverTrigger, ScrollArea } from "@/shared/ui";
-import { format } from "date-fns";
-import { CalendarIcon, ChevronDown } from "lucide-react";
-import { useState } from "react";
 import type { ShareScheduleItemType } from "../lib";
 import { ShareScheduleItem } from "./ShareScheduleItem";
 import { ToggleCheckButton } from "./ToggleCheckButton";

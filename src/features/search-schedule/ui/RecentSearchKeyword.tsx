@@ -1,5 +1,5 @@
-import { Button } from "@/shared/ui";
 import { X } from "lucide-react";
+import { Button } from "@/shared/ui";
 
 interface RecentSearchKeywordProps {
   recentKeywords: string[];

@@ -1,6 +1,6 @@
-import type { Member } from "@/entities/member";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { Member } from "@/entities/member";
 
 const STORAGE_KEY = "scheduo-auth";
 

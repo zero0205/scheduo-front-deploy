@@ -3,7 +3,7 @@ import { ko } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-
+import type { InputScheduleRequest, Schedule } from "@/entities/schedule";
 import { cn } from "@/shared/lib";
 import {
   Button,
@@ -27,8 +27,6 @@ import {
   Switch,
   Textarea,
 } from "@/shared/ui";
-
-import type { InputScheduleRequest, Schedule } from "@/entities/schedule";
 import { NOTIFICATION_OPTIONS, RECURRENCE_OPTIONS } from "../consts";
 import type { ScheduleFormData } from "../lib";
 import { TimePicker } from "./TimePicker";

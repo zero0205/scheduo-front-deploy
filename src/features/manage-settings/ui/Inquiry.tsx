@@ -1,6 +1,6 @@
+import { useForm } from "react-hook-form";
 import { Button, Input, Textarea } from "@/shared/ui";
 import { Label } from "@/shared/ui/label";
-import { useForm } from "react-hook-form";
 
 interface InquiryFormData {
   title: string;

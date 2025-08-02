@@ -1,5 +1,5 @@
-import { Button } from "@/shared/ui";
 import { Check } from "lucide-react";
+import { Button } from "@/shared/ui";
 
 interface ToggleCheckButtonProps {
   isSelected: boolean;

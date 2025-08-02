@@ -1,5 +1,5 @@
-import { useAuthStore } from "@/shared/stores";
 import { Navigate, Outlet } from "react-router";
+import { useAuthStore } from "@/shared/stores";
 
 interface ProtectedRouteProps {
   requireAuth?: boolean;

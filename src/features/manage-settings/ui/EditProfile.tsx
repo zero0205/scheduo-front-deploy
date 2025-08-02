@@ -1,12 +1,12 @@
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { useShallow } from "zustand/shallow";
 import { memberApi } from "@/entities/member/api";
 import { devLogger } from "@/shared/lib";
 import { useAuthStore } from "@/shared/stores";
 import { Button, Input } from "@/shared/ui";
 import { Label } from "@/shared/ui/label";
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { useShallow } from "zustand/shallow";
 
 interface EditProfileProps {
   onCancel: () => void;

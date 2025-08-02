@@ -1,6 +1,6 @@
+import { Clock, Plus, Share2 } from "lucide-react";
 import type { RightSidebarViewType } from "@/shared/model";
 import { ButtonGroup, ScrollArea } from "@/shared/ui";
-import { Clock, Plus, Share2 } from "lucide-react";
 import type { ScheduleItem } from "../lib";
 
 interface DailyScheduleProps {

@@ -1,3 +1,7 @@
+import { PenSquare, Trash2, User, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import {
   type CalendarParticipant,
   type CalendarRole,
@@ -32,10 +36,6 @@ import {
   SelectValue,
   TextConfirmDialog,
 } from "@/shared/ui";
-import { PenSquare, Trash2, User, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 
 interface EditableScheduleCalendar {
   calendarId: number;
@@ -87,7 +87,7 @@ export const EditCalendar = ({ calendarId }: EditCalendarProps) => {
   const fetchCalendarData = useCallback(async (id: number): Promise<EditableScheduleCalendar> => {
     try {
       return await calendarApi.getCalendarById(id);
-    } catch (err) {
+    } catch {
       throw new Error("캘린더 정보를 불러오는데 실패했습니다.");
     }
   }, []);
