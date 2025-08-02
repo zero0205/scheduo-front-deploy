@@ -21,7 +21,7 @@ export const calendarApi = {
   },
 
   inviteToCalendar: async (calendarId: number, data: InviteToCalendarRequest) => {
-    await axiosInstance.post(`/calendars/${calendarId}`, data);
+    await axiosInstance.post(`/calendars/${calendarId}/invite`, data);
   },
 
   getCalendarList: async (): Promise<GetCalendarListResponse> => {

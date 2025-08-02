@@ -1,7 +1,9 @@
+import { calendarApi } from "@/entities/calendar";
 import type { Notification } from "@/entities/notification";
 import { devLogger } from "@/shared/lib";
 import { Button } from "@/shared/ui";
 import { X } from "lucide-react";
+import { toast } from "sonner";
 import { NOTIFICATION_TYPE_LABELS } from "../consts";
 import { getRelativeTime } from "../lib";
 
@@ -21,26 +23,37 @@ export const NotificationItem = ({ notification, onDelete }: NotificationItemPro
     }
   };
 
-  const handleAccept = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleInviteAction = async (action: "accept" | "decline") => {
+    const { calendarId } = notification.data ?? {};
+
+    if (typeof calendarId !== "number") {
+      devLogger.error("Invalid calendarId in notification data", notification.data);
+      toast.error("알림 처리 중 오류가 발생했습니다.");
+      return;
+    }
+
+    const actionApi = {
+      accept: calendarApi.acceptInvite,
+      decline: calendarApi.rejectInvite,
+    };
+
     try {
-      // TODO: POST /calendars/{calendarId}/invite/accept API 연동
-      devLogger.log(`Accepted notification ${notification.id}`);
+      await actionApi[action](calendarId);
       onDelete(notification.id);
     } catch (error) {
-      devLogger.error("Failed to accept notification", error);
+      devLogger.error(`Failed to ${action} notification`, error);
+      toast.error("알림 처리 중 오류가 발생했습니다.");
     }
+  };
+
+  const handleAccept = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleInviteAction("accept");
   };
 
   const handleDecline = (e: React.MouseEvent) => {
     e.stopPropagation();
-    try {
-      // TODO: POST /calendars/{calendarId}/invite/decline API 연동
-      devLogger.log(`Declined notification ${notification.id}`);
-      onDelete(notification.id);
-    } catch (error) {
-      devLogger.error("Failed to decline notification", error);
-    }
+    handleInviteAction("decline");
   };
 
   return (
