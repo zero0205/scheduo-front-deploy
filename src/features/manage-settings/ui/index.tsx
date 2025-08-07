@@ -31,8 +31,8 @@ export const ManageSettings = () => {
     }
   };
 
-  const handleLogOut = () => {
-    requestLogOut();
+  const handleLogOut = async () => {
+    await requestLogOut();
     navigate("/login");
   };
 

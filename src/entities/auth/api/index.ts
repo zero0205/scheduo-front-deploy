@@ -9,13 +9,16 @@ export const requestLogIn = (provider: "google" | "kakao") => {
   window.location.href = url.href;
 };
 
-export const requestLogOut = () => {
+export const requestLogOut = async () => {
   const { refreshToken, clearAuth } = useAuthStore.getState();
 
-  axiosInstance
-    .post("/auth/logout", {
+  try {
+    await axiosInstance.post("/auth/logout", {
       refreshToken,
-    })
-    .catch((error) => devLogger.error(error.message));
-  clearAuth();
+    });
+  } catch (error) {
+    devLogger.error(error);
+  } finally {
+    clearAuth();
+  }
 };
