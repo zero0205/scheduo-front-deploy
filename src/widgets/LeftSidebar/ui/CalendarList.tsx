@@ -1,23 +1,32 @@
-import { useEffect, useState } from "react";
-import { calendarApi, useCalendarStore } from "@/entities/calendar";
+import { useState } from "react";
+import { useGetCalendarList } from "@/entities/calendar";
 import { EditCalendar } from "@/features/edit-calendar";
 
 export const CalendarList = () => {
-  const { calendars, setCalendars } = useCalendarStore();
+  const { data, isLoading, error } = useGetCalendarList();
   const [hoveredCalendarId, setHoveredCalendarId] = useState<number>(-1);
 
-  useEffect(() => {
-    const fetchCalendars = async () => {
-      try {
-        const response = await calendarApi.getCalendarList();
-        setCalendars(response.calendars);
-      } catch (error) {
-        console.error("Failed to fetch calendars:", error);
-      }
-    };
+  if (isLoading) {
+    return (
+      <div className="mt-2 space-y-3">
+        <div className="flex h-9 items-center justify-center">
+          <span className="text-grayscale-500 text-medium-m">캘린더 목록을 불러오는 중...</span>
+        </div>
+      </div>
+    );
+  }
 
-    fetchCalendars();
-  }, [setCalendars]);
+  if (error) {
+    return (
+      <div className="mt-2 space-y-3">
+        <div className="flex h-9 items-center justify-center">
+          <span className="text-medium-m text-red-500">캘린더 목록을 불러오는데 실패했습니다.</span>
+        </div>
+      </div>
+    );
+  }
+
+  const calendars = data?.calendars || [];
 
   return (
     <div className="mt-2 space-y-3">

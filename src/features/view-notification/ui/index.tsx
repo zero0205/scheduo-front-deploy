@@ -1,6 +1,4 @@
-import { useEffect, useState } from "react";
-import { type Notification, notificationApi } from "@/entities/notification";
-import { devLogger } from "@/shared/lib";
+import { useGetNotifications } from "@/entities/notification";
 import { Badge } from "@/shared/ui/badge";
 import { NotificationItem } from "./NotificationItem";
 
@@ -9,30 +7,10 @@ import { NotificationItem } from "./NotificationItem";
  * 일정 알림, 캘린더 초대 알림 등을 표시하고 읽음 처리 및 삭제 기능을 제공합니다.
  */
 export const NotificationList = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { data, isLoading, error } = useGetNotifications();
+
+  const notifications = data?.notifications || [];
   const unreadCount = notifications.length;
-
-  const handleDelete = async (notificationId: number) => {
-    try {
-      await notificationApi.deleteNotification(notificationId);
-      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-    } catch (error) {
-      devLogger.error("Failed to delete notification", error);
-    }
-  };
-
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const { notifications } = await notificationApi.getNotifications();
-        setNotifications(notifications);
-      } catch (error) {
-        devLogger.error("Failed to fetch notifications", error);
-      }
-    };
-
-    fetchNotifications();
-  }, []);
 
   return (
     <div className="w-full max-w-sm p-3">
@@ -46,12 +24,14 @@ export const NotificationList = () => {
       </div>
 
       <div className="space-y-3">
-        {notifications.length === 0 ? (
+        {isLoading ? (
+          <p className="text-center text-grayscale-500 text-medium-m">알림을 불러오는 중...</p>
+        ) : error ? (
+          <p className="text-center text-medium-m text-red-500">알림을 불러오는데 실패했습니다.</p>
+        ) : notifications.length === 0 ? (
           <p className="text-center text-grayscale-500 text-medium-m">알림이 없습니다.</p>
         ) : (
-          notifications.map((notification) => (
-            <NotificationItem key={notification.id} notification={notification} onDelete={handleDelete} />
-          ))
+          notifications.map((notification) => <NotificationItem key={notification.id} notification={notification} />)
         )}
       </div>
     </div>

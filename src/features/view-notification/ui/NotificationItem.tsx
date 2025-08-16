@@ -1,49 +1,43 @@
 import { X } from "lucide-react";
 import { toast } from "sonner";
-import { calendarApi } from "@/entities/calendar";
-import type { Notification } from "@/entities/notification";
-import { devLogger } from "@/shared/lib";
+import { useAcceptInvite, useRejectInvite } from "@/entities/calendar";
+import { type Notification, useDeleteNotification } from "@/entities/notification";
 import { Button } from "@/shared/ui";
 import { NOTIFICATION_TYPE_LABELS } from "../consts";
 import { getRelativeTime } from "../lib";
 
 interface NotificationItemProps {
   notification: Notification;
-  onDelete: (id: number) => void;
 }
 
-export const NotificationItem = ({ notification, onDelete }: NotificationItemProps) => {
-  const handleInviteAction = async (action: "accept" | "decline") => {
+export const NotificationItem = ({ notification }: NotificationItemProps) => {
+  const acceptInviteMutation = useAcceptInvite();
+  const rejectInviteMutation = useRejectInvite();
+  const deleteNotificationMutation = useDeleteNotification();
+
+  const getValidCalendarId = () => {
     const { calendarId } = notification.data ?? {};
-
     if (typeof calendarId !== "number") {
-      devLogger.error("Invalid calendarId in notification data", notification.data);
       toast.error("알림 처리 중 오류가 발생했습니다.");
-      return;
+      return null;
     }
-
-    const actionApi = {
-      accept: calendarApi.acceptInvite,
-      decline: calendarApi.rejectInvite,
-    };
-
-    try {
-      await actionApi[action](calendarId);
-      onDelete(notification.id);
-    } catch (error) {
-      devLogger.error(`Failed to ${action} notification`, error);
-      toast.error("알림 처리 중 오류가 발생했습니다.");
-    }
+    return calendarId;
   };
 
   const handleAccept = (e: React.MouseEvent) => {
     e.stopPropagation();
-    handleInviteAction("accept");
+    const calendarId = getValidCalendarId();
+    if (!calendarId) return;
+
+    acceptInviteMutation.mutate(calendarId);
   };
 
   const handleDecline = (e: React.MouseEvent) => {
     e.stopPropagation();
-    handleInviteAction("decline");
+    const calendarId = getValidCalendarId();
+    if (!calendarId) return;
+
+    rejectInviteMutation.mutate(calendarId);
   };
 
   return (
@@ -54,7 +48,7 @@ export const NotificationItem = ({ notification, onDelete }: NotificationItemPro
           <span className="text-grayscale-500 text-medium-s">{getRelativeTime(notification.createdAt)}</span>
           <button
             type="button"
-            onClick={() => onDelete(notification.id)}
+            onClick={() => deleteNotificationMutation.mutate(notification.id)}
             className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded text-grayscale-500 hover:text-grayscale-black"
             aria-label="알림 삭제"
           >
@@ -65,11 +59,23 @@ export const NotificationItem = ({ notification, onDelete }: NotificationItemPro
       <p className="text-grayscale-700 text-medium-s">{notification.message}</p>
       {notification.type === "CALENDAR_INVITATION" && (
         <div className="flex w-full gap-2 pt-2">
-          <Button className="flex-1" variant="default" size="sm" onClick={handleAccept}>
-            수락
+          <Button
+            className="flex-1"
+            variant="default"
+            size="sm"
+            onClick={handleAccept}
+            disabled={acceptInviteMutation.isPending}
+          >
+            {acceptInviteMutation.isPending ? "수락 중..." : "수락"}
           </Button>
-          <Button className="flex-1" variant="outline" size="sm" onClick={handleDecline}>
-            거절
+          <Button
+            className="flex-1"
+            variant="outline"
+            size="sm"
+            onClick={handleDecline}
+            disabled={rejectInviteMutation.isPending}
+          >
+            {rejectInviteMutation.isPending ? "거절 중..." : "거절"}
           </Button>
         </div>
       )}
