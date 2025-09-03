@@ -16,8 +16,8 @@ export interface CreateCalendarResponse {
 }
 
 export interface UpdateCalendarRequest {
-  title: string;
-  nickname: string;
+  title?: string;
+  nickname?: string;
 }
 
 export interface InviteToCalendarRequest {

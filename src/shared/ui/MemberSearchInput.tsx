@@ -10,6 +10,7 @@ interface MemberSearchInputProps {
   excludeEmails?: string[];
   onSelectMember: (member: Member) => void;
   className?: string;
+  disabled?: boolean;
 }
 
 interface SearchResult {
@@ -25,6 +26,7 @@ export const MemberSearchInput = ({
   excludeEmails = [],
   onSelectMember,
   className,
+  disabled = false,
 }: MemberSearchInputProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Member[]>([]);
@@ -139,6 +141,7 @@ export const MemberSearchInput = ({
             }
           }}
           onKeyDown={handleKeyDown}
+          disabled={disabled}
         />
         {isSearching && (
           <div className="-translate-y-1/2 absolute top-1/2 right-3">
