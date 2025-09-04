@@ -1,12 +1,14 @@
 import { Clock, Plus, Share2 } from "lucide-react";
+import { useMemo } from "react";
+import { useDailySchedules } from "@/entities/schedule";
+import { useCurrentCalendarId } from "@/shared/lib";
 import type { RightSidebarViewType } from "@/shared/model";
 import { ButtonGroup, ScrollArea } from "@/shared/ui";
-import type { ScheduleItem } from "../lib";
 
 interface DailyScheduleProps {
   selectedDate?: Date;
-  schedules?: ScheduleItem[];
   onSetView: (viewType: RightSidebarViewType) => void;
+  onScheduleEdit: (scheduleData: any) => void;
 }
 
 /**
@@ -19,7 +21,33 @@ interface DailyScheduleProps {
  * @param schedules - 해당 날짜의 일정 목록 (기본값: 빈 배열)
  * @param onSetView - 뷰 변경을 위한 콜백 함수
  */
-export const DailySchedule = ({ selectedDate = new Date(), schedules = [], onSetView }: DailyScheduleProps) => {
+export const DailySchedule = ({ selectedDate = new Date(), onSetView, onScheduleEdit }: DailyScheduleProps) => {
+  const calendarId = useCurrentCalendarId();
+
+  const dateString = useMemo(() => {
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+    const day = String(selectedDate.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }, [selectedDate]);
+
+  const { data: dailyScheduleData, isLoading } = useDailySchedules(calendarId ?? 0, dateString, {
+    enabled: !!calendarId,
+  });
+
+  const schedules = useMemo(() => {
+    if (!dailyScheduleData?.schedules) return [];
+
+    return dailyScheduleData.schedules.map((schedule) => ({
+      id: schedule.id,
+      title: schedule.title,
+      // location: schedule.location || "장소 없음",
+      startTime: schedule.startTime,
+      endTime: schedule.endTime,
+      isAllDay: schedule.allDay, // 하루 종일 일정 여부 추론
+      calendar: { title: schedule.category.name },
+    }));
+  }, [dailyScheduleData]);
   const formatDate = (date: Date): string => {
     const month = date.getMonth() + 1;
     const day = date.getDate();
@@ -29,7 +57,10 @@ export const DailySchedule = ({ selectedDate = new Date(), schedules = [], onSet
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-20 p-6">
-        <h2 className="mb-4 text-bold-l text-grayscale-black">{formatDate(selectedDate)}</h2>
+        <h2 className="mb-4 text-bold-l text-grayscale-black">
+          {formatDate(selectedDate)}
+          {isLoading && <span className="ml-2 text-grayscale-500 text-sm">로딩 중...</span>}
+        </h2>
       </div>
 
       <ScrollArea className="w-full flex-1 px-1">
@@ -40,6 +71,7 @@ export const DailySchedule = ({ selectedDate = new Date(), schedules = [], onSet
                 type="button"
                 aria-label={`일정: ${schedule.title}`}
                 key={schedule.id}
+                onClick={() => onScheduleEdit(dailyScheduleData?.schedules.find((s) => s.id === schedule.id))}
                 className="group w-full cursor-pointer rounded-lg border border-grayscale-100 p-4 shadow transition-colors hover:bg-grayscale-100"
               >
                 <div className="flex w-full flex-col items-start justify-between">
@@ -57,10 +89,10 @@ export const DailySchedule = ({ selectedDate = new Date(), schedules = [], onSet
                     </div>
                   </div>
 
-                  <div className="flex w-full items-center justify-between text-grayscale-500 text-medium-s">
+                  {/* <div className="flex w-full items-center justify-between text-grayscale-500 text-medium-s">
                     <div className="truncate">{schedule.location}</div>
                     <div>{schedule.calendar.title}</div>
-                  </div>
+                  </div> */}
                 </div>
               </button>
             ))

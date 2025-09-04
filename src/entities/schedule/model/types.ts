@@ -4,28 +4,27 @@ export interface Schedule {
   id: number;
   title: string;
   isAllDay: boolean;
-  startDate: string; // yyyy-mm-dd
-  endDate: string;
-  startTime: string; // hh:mm
-  endTime: string;
+  startDateTime: string;
+  endDateTime: string;
   location: string;
-  category: string;
+  category: CalendarCategory;
   memo: string;
-  notificationTime: NotificationTime;
+  notificationTime?: NotificationTime;
   recurrence: ScheduleRecurrence | null;
   calendar: ScheduleCalendar;
 }
 
 export interface ScheduleRecurrence {
-  recurrenceRule: RecurrenceRule;
-  recurrenceEndDate: string; // yyyy-mm-dd
+  frequency: RecurrenceRule;
+  recurrenceEndDate: string;
 }
 
-export type NotificationTime =
-  | "NONE"
-  | "ONE_DAY_BEFORE"
-  | "ONE_HOUR_BEFORE"
-  | "THIRTY_MINUTES_BEFORE"
-  | "FIVE_MINUTES_BEFORE";
+export type NotificationTime = "ONE_DAY_BEFORE" | "ONE_HOUR_BEFORE" | "THIRTY_MINUTES_BEFORE" | "FIVE_MINUTES_BEFORE";
 
 export type RecurrenceRule = "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
+
+export type CalendarCategory = "할 일" | "취미" | "학교" | "회사" | "기타";
+
+export type CalendarCategoryColor = "CYAN" | "PURPLE" | "TEAL" | "PINK" | "GRAY";
+
+export type ScheduleEditScope = "ALL" | "ONLY_THIS" | "THIS_AND_FUTURE";

@@ -9,6 +9,7 @@ export const Router = () => {
     <Routes>
       <Route element={<ProtectedRoute requireAuth={true} />}>
         <Route path="/" element={<Main />} />
+        <Route path="/calendar/:calendarId" element={<Main />} />
       </Route>
 
       <Route element={<ProtectedRoute requireAuth={false} />}>

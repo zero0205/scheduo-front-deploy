@@ -1,11 +1,13 @@
+import { cn } from "@/shared/lib";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 
 interface TimePickerProps {
   value?: string;
   onChange: (time: string) => void;
+  className?: string;
 }
 
-export const TimePicker = ({ value = "", onChange }: TimePickerProps) => {
+export const TimePicker = ({ value = "", onChange, className }: TimePickerProps) => {
   const [hours, minutes] = value ? value.split(":") : ["", ""];
 
   const hourOptions = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"));
@@ -26,7 +28,7 @@ export const TimePicker = ({ value = "", onChange }: TimePickerProps) => {
   const displayMinutes = minutes || "00";
 
   return (
-    <div className="flex w-full gap-2">
+    <div className={cn("flex w-full gap-2", className)}>
       <div className="flex-1">
         <Select value={displayHours} onValueChange={handleHourChange}>
           <SelectTrigger className="w-full">

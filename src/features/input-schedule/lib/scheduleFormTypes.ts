@@ -1,4 +1,4 @@
-import type { NotificationTime, RecurrenceRule } from "@/entities/schedule";
+import type { CalendarCategory, NotificationTime, RecurrenceRule } from "@/entities/schedule";
 
 export interface ScheduleFormData {
   title: string;
@@ -8,7 +8,7 @@ export interface ScheduleFormData {
   endDate: string;
   endTime: string;
   location: string;
-  category: string;
+  category: CalendarCategory;
   memo: string;
   hasNotification: boolean;
   notificationTime: NotificationTime;

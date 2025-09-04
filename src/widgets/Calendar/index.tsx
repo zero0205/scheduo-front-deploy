@@ -1,8 +1,9 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
+import { getCategoryColorClass, useMonthlySchedules } from "@/entities/schedule";
+import { useCurrentCalendarId } from "@/shared/lib";
 import { Button } from "@/shared/ui";
 import { DAY_NAMES } from "./consts";
-import { CurrentMonthEvents } from "./sampleData";
 
 export type Event = {
   id: string;
@@ -21,9 +22,20 @@ type EventMatrix = {
  * 이벤트 표시, 월 이동, 날짜 선택 기능을 제공합니다.
  */
 
-export const Calendar = () => {
+interface CalendarProps {
+  onDateSelect?: (date: Date) => void;
+}
+
+export const Calendar = ({ onDateSelect }: CalendarProps = {}) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const calendarId = useCurrentCalendarId();
+
+  // 월별 일정 조회
+  const currentMonthString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-01`;
+  const { data: monthlySchedule, isLoading } = useMonthlySchedules(calendarId ?? 0, currentMonthString, {
+    enabled: !!calendarId,
+  });
 
   const goToPreviousMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
@@ -63,9 +75,22 @@ export const Calendar = () => {
     return days;
   }, [currentDate]);
 
+  // API 응답을 Calendar Event 형태로 변환
+  const events = useMemo(() => {
+    if (!monthlySchedule || !Array.isArray(monthlySchedule.schedules)) return [];
+
+    return monthlySchedule.schedules.map((schedule) => ({
+      id: schedule.id.toString(),
+      title: schedule.title,
+      startDate: new Date(schedule?.startDate || ""),
+      endDate: new Date(schedule?.endDate || ""),
+      color: getCategoryColorClass(schedule.category.color),
+    }));
+  }, [monthlySchedule]);
+
   const eventMatrix = useMemo(() => {
     const matrix: EventMatrix = {};
-    const allEvents = CurrentMonthEvents;
+    const allEvents = events;
     const allDates = calendarDays.map(({ date }) => new Date(date.getFullYear(), date.getMonth(), date.getDate()));
 
     type PlacedEvent = Event & { row: number };
@@ -104,7 +129,7 @@ export const Calendar = () => {
       matrix[date.toDateString()] = rowArr;
     }
     return matrix;
-  }, [calendarDays]);
+  }, [calendarDays, events]);
 
   const isSameDay = (date1: Date, date2: Date) => {
     return (
@@ -128,6 +153,7 @@ export const Calendar = () => {
 
           <h2 className="font-semibold text-bold-l">
             {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월
+            {isLoading && <span className="ml-2 text-grayscale-500 text-sm">로딩 중...</span>}
           </h2>
 
           <Button onClick={goToNextMonth} variant="ghost" size="icon" className="p-2">
@@ -168,7 +194,10 @@ export const Calendar = () => {
               className={`flex flex-col items-start justify-start overflow-hidden border border-grayscale-200 transition-colors hover:cursor-pointer ${
                 isCurrentMonth ? "hover:bg-grayscale-100" : "text-grayscale-400"
               } ${isSelected ? "z-10 bg-grayscale-200 ring-2 ring-primary-main" : "z-0"}`}
-              onClick={() => setSelectedDate(date)}
+              onClick={() => {
+                setSelectedDate(date);
+                onDateSelect?.(date);
+              }}
               aria-label={`${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`}
             >
               <div

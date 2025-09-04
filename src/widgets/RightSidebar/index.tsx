@@ -1,10 +1,12 @@
 import { Bell, Search } from "lucide-react";
 import { useState } from "react";
+import type { ScheduleItem } from "@/entities/schedule";
 import { CreateSchedule, EditSchedule } from "@/features/input-schedule";
 import { SearchSchedule } from "@/features/search-schedule";
 import { ShareSchedule } from "@/features/share-schedule";
 import { DailySchedule } from "@/features/view-daily-schedule";
 import { NotificationList } from "@/features/view-notification";
+import { ScheduleDetail } from "@/features/view-schedule-detail";
 import type { RightSidebarViewType } from "@/shared/model";
 import { Button } from "@/shared/ui";
 
@@ -16,25 +18,60 @@ import { Button } from "@/shared/ui";
  * 메인 콘텐츠 영역에서는 일정 조회, 생성, 수정, 공유, 검색, 알림 등의 기능을 제공합니다.
  */
 
-export const RightSidebar = () => {
+interface RightSidebarProps {
+  selectedDate?: Date;
+}
+
+export const RightSidebar = ({ selectedDate }: RightSidebarProps) => {
   const [currentView, setCurrentView] = useState<RightSidebarViewType>("daily");
+  const [selectedScheduleId, setSelectedScheduleId] = useState<number | undefined>(undefined);
+
+  const handleScheduleDetail = (scheduleData: ScheduleItem) => {
+    setSelectedScheduleId(scheduleData.id);
+    setCurrentView("detail");
+  };
+
+  const handleScheduleEdit = (scheduleData?: ScheduleItem) => {
+    if (scheduleData) {
+      setSelectedScheduleId(scheduleData.id);
+    }
+    setCurrentView("edit");
+  };
+
+  const handleCancel = () => {
+    setSelectedScheduleId(undefined);
+    setCurrentView("daily");
+  };
 
   const renderContent = () => {
     switch (currentView) {
       case "daily":
-        return <DailySchedule onSetView={setCurrentView} />;
+        return (
+          <DailySchedule selectedDate={selectedDate} onSetView={setCurrentView} onScheduleEdit={handleScheduleDetail} />
+        );
       case "share":
         return <ShareSchedule onSetView={setCurrentView} />;
       case "create":
         return <CreateSchedule onCancel={() => setCurrentView("daily")} />;
+      case "detail":
+        return (
+          <ScheduleDetail
+            scheduleId={selectedScheduleId}
+            selectedDate={selectedDate}
+            onEdit={handleScheduleEdit}
+            onCancel={handleCancel}
+          />
+        );
       case "edit":
-        return <EditSchedule onCancel={() => setCurrentView("daily")} />;
+        return <EditSchedule scheduleId={selectedScheduleId} selectedDate={selectedDate} onCancel={handleCancel} />;
       case "search":
         return <SearchSchedule />;
       case "notification":
         return <NotificationList />;
       default:
-        return <DailySchedule onSetView={setCurrentView} />;
+        return (
+          <DailySchedule selectedDate={selectedDate} onSetView={setCurrentView} onScheduleEdit={handleScheduleDetail} />
+        );
     }
   };
 

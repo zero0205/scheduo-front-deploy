@@ -3,7 +3,7 @@ import { ko } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import type { InputScheduleRequest, Schedule } from "@/entities/schedule";
+import type { CalendarCategory, InputScheduleRequest, ScheduleDetailResponse } from "@/entities/schedule";
 import { cn } from "@/shared/lib";
 import {
   Button,
@@ -32,12 +32,31 @@ import type { ScheduleFormData } from "../lib";
 import { TimePicker } from "./TimePicker";
 
 interface ScheduleFormProps {
-  initialData?: Partial<Schedule>;
+  initialData?: ScheduleDetailResponse;
   onSubmit: (data: InputScheduleRequest) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
   submitButtonText?: string;
 }
+
+/**
+ * ISO 문자열이나 날짜 문자열에서 날짜 부분만 추출
+ */
+const extractDate = (dateString?: string): string => {
+  if (!dateString) return "";
+  // ISO 문자열 (YYYY-MM-DDTHH:mm:ss) 또는 날짜 문자열 (YYYY-MM-DD)
+  return dateString.split("T")[0];
+};
+
+/**
+ * ISO 문자열에서 시간 부분만 추출
+ */
+const extractTime = (dateTimeString?: string): string => {
+  if (!dateTimeString) return "";
+  if (!dateTimeString.includes("T")) return "00:00"; // 날짜만 있는 경우
+  const timePart = dateTimeString.split("T")[1];
+  return timePart ? timePart.slice(0, 5) : "00:00"; // HH:mm 형태로
+};
 
 /**
  * 일정 생성/수정을 위한 폼 컴포넌트입니다.
@@ -53,18 +72,20 @@ export const ScheduleForm = ({
   const form = useForm<ScheduleFormData>({
     defaultValues: {
       title: initialData?.title ?? "",
-      isAllDay: initialData?.isAllDay ?? false,
-      startDate: initialData?.startDate ?? "",
-      startTime: initialData?.startTime ?? "",
-      endDate: initialData?.endDate ?? "",
-      endTime: initialData?.endTime ?? "",
+      isAllDay: initialData?.allDay ?? false,
+      // startDate, endDate: 다양한 형태 처리
+      startDate: extractDate(initialData?.startDateTime) || "",
+      endDate: extractDate(initialData?.endDateTime) || "",
+      // startTime, endTime: ISO 문자열에서 시간 추출 또는 기본값
+      startTime: extractTime(initialData?.startDateTime) || "00:00",
+      endTime: extractTime(initialData?.endDateTime) || "01:00",
       location: initialData?.location ?? "",
-      category: initialData?.category ?? "",
+      category: initialData?.category as CalendarCategory,
       memo: initialData?.memo ?? "",
-      hasNotification: initialData?.notificationTime !== "NONE" && initialData?.notificationTime !== undefined,
+      hasNotification: initialData?.notificationTime !== undefined,
       notificationTime: initialData?.notificationTime ?? "FIVE_MINUTES_BEFORE",
       hasRecurrence: initialData?.recurrence !== null && initialData?.recurrence !== undefined,
-      recurrenceRule: initialData?.recurrence?.recurrenceRule ?? "DAILY",
+      recurrenceRule: initialData?.recurrence?.frequency ?? "DAILY",
       recurrenceEndDate: initialData?.recurrence?.recurrenceEndDate ?? "",
     },
   });
@@ -77,32 +98,24 @@ export const ScheduleForm = ({
     const requestData: InputScheduleRequest = {
       title: data.title,
       isAllDay: data.isAllDay,
-      startDate: data.startDate,
-      endDate: data.endDate,
-      startTime: data.startTime,
-      endTime: data.endTime,
+      startDateTime: data.isAllDay ? `${data.startDate}T00:00:00` : `${data.startDate}T${data.startTime}:00`,
+      endDateTime: data.isAllDay ? `${data.endDate}T23:59:59` : `${data.endDate}T${data.endTime}:00`,
       location: data.location,
       category: data.category,
       memo: data.memo,
-      notificationTime: data.hasNotification ? data.notificationTime : "NONE",
+      notificationTime: data.hasNotification ? data.notificationTime : undefined,
       recurrence: data.hasRecurrence
         ? {
-            recurrenceRule: data.recurrenceRule,
+            frequency: data.recurrenceRule,
             recurrenceEndDate: data.recurrenceEndDate,
           }
         : null,
     };
 
     onSubmit(requestData);
-    console.log(requestData);
   };
 
   const [openDatePicker, setOpenDatePicker] = useState<string | null>(null);
-
-  // 에러 상태 확인 함수
-  const hasError = (fieldName: keyof ScheduleFormData) => {
-    return !!form.formState.errors[fieldName];
-  };
 
   return (
     <div className="flex h-full flex-col">
@@ -114,12 +127,12 @@ export const ScheduleForm = ({
               control={form.control}
               name="title"
               rules={{ required: "일정 제목은 필수입니다" }}
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem className="mx-3">
                   <FormLabel
                     className={cn(
                       "text-medium-m",
-                      hasError("title") ? "text-notification-strong" : "text-grayscale-700",
+                      fieldState.error ? "text-notification-strong" : "text-grayscale-700",
                     )}
                   >
                     일정 제목
@@ -129,11 +142,12 @@ export const ScheduleForm = ({
                       placeholder="일정 제목을 입력하세요"
                       {...field}
                       className={cn(
-                        hasError("title") &&
+                        fieldState.error &&
                           "border-[2px] border-notification-strong focus:border-notification-strong focus:ring-notification-strong",
                       )}
                     />
                   </FormControl>
+                  {fieldState.error && <p className="text-notification-strong text-sm">{fieldState.error.message}</p>}
                 </FormItem>
               )}
             />
@@ -157,12 +171,12 @@ export const ScheduleForm = ({
               control={form.control}
               name="startDate"
               rules={{ required: "시작 날짜는 필수입니다" }}
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem className="mx-3">
                   <FormLabel
                     className={cn(
                       "text-medium-m",
-                      hasError("startDate") ? "text-notification-strong" : "text-grayscale-700",
+                      fieldState.error ? "text-notification-strong" : "text-grayscale-700",
                     )}
                   >
                     시작 날짜
@@ -178,7 +192,7 @@ export const ScheduleForm = ({
                           className={cn(
                             "w-full justify-start text-left font-normal",
                             !field.value && "text-muted-foreground",
-                            hasError("startDate") && "border-[2px] border-notification-strong text-notification-strong",
+                            fieldState.error && "border-[2px] border-notification-strong text-notification-strong",
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
@@ -203,6 +217,7 @@ export const ScheduleForm = ({
                       </PopoverContent>
                     </Popover>
                   </FormControl>
+                  {fieldState.error && <p className="text-notification-strong text-sm">{fieldState.error.message}</p>}
                 </FormItem>
               )}
             />
@@ -213,12 +228,24 @@ export const ScheduleForm = ({
                 control={form.control}
                 name="startTime"
                 rules={{ required: !isAllDay ? "시작 시간은 필수입니다" : false }}
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <FormItem className="mx-3">
-                    <FormLabel className="sr-only">시작 시간</FormLabel>
+                    <FormLabel
+                      className={cn(
+                        "text-medium-m",
+                        fieldState.error ? "text-notification-strong" : "text-grayscale-700",
+                      )}
+                    >
+                      시작 시간
+                    </FormLabel>
                     <FormControl>
-                      <TimePicker value={field.value} onChange={field.onChange} />
+                      <TimePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        className={cn(fieldState.error && "border-[2px] border-notification-strong")}
+                      />
                     </FormControl>
+                    {fieldState.error && <p className="text-notification-strong text-sm">{fieldState.error.message}</p>}
                   </FormItem>
                 )}
               />
@@ -229,14 +256,14 @@ export const ScheduleForm = ({
               control={form.control}
               name="endDate"
               rules={{ required: "종료 날짜는 필수입니다" }}
-              render={({ field }) => {
+              render={({ field, fieldState }) => {
                 const startDate = form.watch("startDate");
                 return (
                   <FormItem className="mx-3">
                     <FormLabel
                       className={cn(
                         "text-medium-m",
-                        hasError("endDate") ? "text-notification-strong" : "text-grayscale-700",
+                        fieldState.error ? "text-notification-strong" : "text-grayscale-700",
                       )}
                     >
                       종료 날짜
@@ -252,7 +279,7 @@ export const ScheduleForm = ({
                             className={cn(
                               "w-full justify-start text-left font-normal",
                               !field.value && "text-muted-foreground",
-                              hasError("endDate") && "border-[2px] border-notification-strong text-notification-strong",
+                              fieldState.error && "border-[2px] border-notification-strong text-notification-strong",
                             )}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
@@ -280,6 +307,7 @@ export const ScheduleForm = ({
                         </PopoverContent>
                       </Popover>
                     </FormControl>
+                    {fieldState.error && <p className="text-notification-strong text-sm">{fieldState.error.message}</p>}
                   </FormItem>
                 );
               }}
@@ -291,12 +319,24 @@ export const ScheduleForm = ({
                 control={form.control}
                 name="endTime"
                 rules={{ required: !isAllDay ? "종료 시간은 필수입니다" : false }}
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <FormItem className="mx-3">
-                    <FormLabel className="sr-only">종료 시간</FormLabel>
+                    <FormLabel
+                      className={cn(
+                        "text-medium-m",
+                        fieldState.error ? "text-notification-strong" : "text-grayscale-700",
+                      )}
+                    >
+                      종료 시간
+                    </FormLabel>
                     <FormControl>
-                      <TimePicker value={field.value} onChange={field.onChange} />
+                      <TimePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        className={cn(fieldState.error && "border-[2px] border-notification-strong")}
+                      />
                     </FormControl>
+                    {fieldState.error && <p className="text-notification-strong text-sm">{fieldState.error.message}</p>}
                   </FormItem>
                 )}
               />
@@ -324,7 +364,18 @@ export const ScheduleForm = ({
                 <FormItem className="mx-3">
                   <FormLabel className="text-grayscale-700 text-medium-m">카테고리</FormLabel>
                   <FormControl>
-                    <Input placeholder="업무, 취미, 약속 등" {...field} />
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="카테고리를 선택하세요" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="할 일">할 일</SelectItem>
+                        <SelectItem value="취미">취미</SelectItem>
+                        <SelectItem value="학교">학교</SelectItem>
+                        <SelectItem value="회사">회사</SelectItem>
+                        <SelectItem value="기타">기타</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                 </FormItem>
               )}
@@ -371,7 +422,7 @@ export const ScheduleForm = ({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {NOTIFICATION_OPTIONS.filter((option) => option.value !== "NONE").map((option) => (
+                          {NOTIFICATION_OPTIONS.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
                             </SelectItem>
@@ -431,14 +482,14 @@ export const ScheduleForm = ({
                   rules={{
                     required: hasRecurrence ? "반복 종료일은 필수입니다" : false,
                   }}
-                  render={({ field }) => {
+                  render={({ field, fieldState }) => {
                     const startDate = form.watch("startDate");
                     return (
                       <FormItem className="mx-3">
                         <FormLabel
                           className={cn(
                             "text-medium-m",
-                            hasError("recurrenceEndDate") ? "text-notification-strong" : "text-grayscale-700",
+                            fieldState.error ? "text-notification-strong" : "text-grayscale-700",
                           )}
                         >
                           반복 종료일
@@ -454,7 +505,7 @@ export const ScheduleForm = ({
                                 className={cn(
                                   "w-full justify-start text-left font-normal",
                                   !field.value && "text-muted-foreground",
-                                  hasError("recurrenceEndDate") &&
+                                  fieldState.error &&
                                     "border-[2px] border-notification-strong text-notification-strong",
                                 )}
                               >
@@ -483,6 +534,9 @@ export const ScheduleForm = ({
                             </PopoverContent>
                           </Popover>
                         </FormControl>
+                        {fieldState.error && (
+                          <p className="text-notification-strong text-sm">{fieldState.error.message}</p>
+                        )}
                       </FormItem>
                     );
                   }}

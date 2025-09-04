@@ -1,8 +1,13 @@
-import axios, { type AxiosError, type AxiosResponse } from "axios";
+import axios, { type AxiosError, type AxiosRequestConfig, type AxiosResponse } from "axios";
 import { toast } from "sonner";
 import { useAuthStore } from "@/shared/stores";
 import { TOKEN_ERROR_STATUS } from "./consts";
 import type { ErrorResponse, SuccessResponse } from "./types";
+
+// AxiosRequestConfig 타입 확장
+interface CustomAxiosRequestConfig extends AxiosRequestConfig {
+  _retry?: boolean;
+}
 
 const DEFAULT_API_TIMEOUT = 10000;
 
@@ -30,10 +35,29 @@ axiosInstance.interceptors.request.use(
   },
 );
 
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value: any) => void;
+  reject: (error: any) => void;
+}> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(token);
+    }
+  });
+
+  failedQueue = [];
+};
+
 const errorHandler = async (error: AxiosError<ErrorResponse>) => {
   const errorData = error.response?.data;
+  const originalRequest = error.config as CustomAxiosRequestConfig;
 
-  if (errorData?.code === 401) {
+  if (errorData?.code === 401 && originalRequest && !originalRequest._retry) {
     const { refreshToken, setAuth, clearAuth } = useAuthStore.getState();
 
     switch (errorData.status) {
@@ -41,24 +65,52 @@ const errorHandler = async (error: AxiosError<ErrorResponse>) => {
       case TOKEN_ERROR_STATUS.INVALID_TOKEN:
       case TOKEN_ERROR_STATUS.AUTH_FAILED:
         if (refreshToken) {
+          if (isRefreshing) {
+            return new Promise((resolve, reject) => {
+              failedQueue.push({ resolve, reject });
+            })
+              .then((token) => {
+                if (originalRequest.headers) {
+                  originalRequest.headers.Authorization = `Bearer ${token}`;
+                }
+                return axiosInstance(originalRequest);
+              })
+              .catch((err) => {
+                return Promise.reject(err);
+              });
+          }
+
+          originalRequest._retry = true;
+          isRefreshing = true;
+
           try {
             const response = await axios.post<SuccessResponse<{ accessToken: string; refreshToken: string }>>(
               `${import.meta.env.VITE_API_BASE_URL}/auth/token`,
               { refreshToken },
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              },
             );
-            setAuth(response.data.data.accessToken, response.data.data.refreshToken);
 
-            if (error.config?.headers) {
-              error.config.headers.Authorization = `Bearer ${response.data.data.accessToken}`;
+            const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data.data;
+            setAuth(newAccessToken, newRefreshToken);
+
+            processQueue(null, newAccessToken);
+
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
             }
-            if (error.config) {
-              return axiosInstance(error.config);
-            }
-            return Promise.reject(error);
-          } catch {
+
+            return axiosInstance(originalRequest);
+          } catch (refreshError) {
+            processQueue(refreshError, null);
             clearAuth();
             window.location.href = "/login";
-            return Promise.reject(error);
+            return Promise.reject(refreshError);
+          } finally {
+            isRefreshing = false;
           }
         } else {
           clearAuth();
